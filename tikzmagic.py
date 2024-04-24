@@ -98,8 +98,8 @@ class TikzMagics(Magics):
         else:
             width, height = viewbox[2:]
 
-        svg.setAttribute('width', '%dpx' % width)
-        svg.setAttribute('height', '%dpx' % height)
+        svg.setAttribute('width', '%fpt' % (float(width) * 1.5))
+        svg.setAttribute('height', '%fpt' % (float(height) * 1.5))
         return svg.toxml()
 
 
@@ -389,7 +389,7 @@ class TikzMagics(Magics):
             plot_mime_type = _mimetypes.get(plot_format, 'image/%s' % (plot_format))
             width, height = [int(s) for s in size.split(',')]
             if plot_format == 'svg':
-                image = self._fix_gnuplot_svg_size(image, size=(width, height))
+                image = self._fix_gnuplot_svg_size(image)  # , size=(width, height))
             display_data.append((key, {plot_mime_type: image}))
 
         except IOError:
