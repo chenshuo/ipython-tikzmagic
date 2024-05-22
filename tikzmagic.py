@@ -27,6 +27,7 @@ Usage
 #-----------------------------------------------------------------------------
 from __future__ import print_function
 from builtins import str
+import subprocess
 import sys
 import tempfile
 from glob import glob
@@ -98,8 +99,8 @@ class TikzMagics(Magics):
         else:
             width, height = viewbox[2:]
 
-        svg.setAttribute('width', '%fpt' % (float(width) * 1.5))
-        svg.setAttribute('height', '%fpt' % (float(height) * 1.5))
+        svg.setAttribute('width', '%.1fpt' % (float(width) * 1.5))
+        svg.setAttribute('height', '%.1fpt' % (float(height) * 1.5))
         return svg.toxml()
 
 
@@ -319,7 +320,7 @@ class TikzMagics(Magics):
         add_params = ""
 
         if plot_format == 'png' or plot_format == 'jpg' or plot_format == 'jpeg':
-            add_params += "density=300,"
+            add_params += "density=150"
 
         # choose between CircuiTikZ and regular Tikz
         if args.circuitikz:
@@ -334,7 +335,7 @@ class TikzMagics(Magics):
 
         tex = []
         tex.append('''
-\\documentclass[convert={convertexe={%(imagemagick_path)s},%(add_params)ssize=%(width)sx%(height)s,outext=.png},border=0pt]{standalone}
+\\documentclass[convert={convertexe={%(imagemagick_path)s},%(add_params)s,outext=.png},border=0pt]{standalone}
 ''' % locals())
 
         tex.append('\\usepackage[%(tikz_options)s]{%(tikz_package)s}\n' % locals())
@@ -409,6 +410,46 @@ class TikzMagics(Magics):
                 self._publish_display_data(source=tag, data=disp_d, metadata=None)
 
 
+@magics_class
+class GpicMagics(Magics):
+    """A set of magics useful for creating figures with gpic."""
+
+    @needs_local_scope
+    @argument(
+        'code',
+        nargs='*',
+        )
+    @line_cell_magic
+    def gpic(self, line, cell=None, local_ns=None):
+        '''
+        Run gpic code in groff and plot result.
+        '''
+        code = f'.PS\n{cell}.PE'
+
+        # generate plots in a temporary directory
+        plot_dir = tempfile.mkdtemp().replace('\\', '/')
+        self._run_gpic(code, plot_dir)
+
+        plot_format = 'png'
+        image_filename = "%s/out.%s" % (plot_dir, plot_format)
+
+        # Publish image
+        try:
+            image = open(image_filename, 'rb').read()
+            plot_mime_type = _mimetypes.get(plot_format, 'image/%s' % (plot_format))
+            if plot_format == 'svg':
+                image = self._fix_gnuplot_svg_size(image)
+            publish_display_data(source='GpicMagics.Gpic', data={plot_mime_type: image})
+        except IOError:
+            print("No image generated.", file=sys.stderr)
+
+        rmtree(plot_dir)
+
+    def _run_gpic(self, code, plot_dir):
+        subprocess.run('gpic | geqn | groff | ps2eps -q -l -g > out.eps', input=code, cwd=plot_dir, text=True, shell=True)
+        subprocess.run('eps2png -pnggray out.eps', cwd=plot_dir, shell=True)
+
+
 __doc__ = __doc__.format(
     TIKZ_DOC = ' '*8 + TikzMagics.tikz.__doc__,
     )
@@ -417,3 +458,4 @@ __doc__ = __doc__.format(
 def load_ipython_extension(ip):
     """Load the extension in IPython."""
     ip.register_magics(TikzMagics)
+    ip.register_magics(GpicMagics)

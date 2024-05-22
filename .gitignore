@@ -137,3 +137,5 @@ package-lock.json
 # pytest
 .pytest_cache/
 
+# vim
+*.swp
