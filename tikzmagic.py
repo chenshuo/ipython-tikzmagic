@@ -253,7 +253,7 @@ class TikzMagics(Magics):
         )
     @line_cell_magic
     def tikz(self, line, cell=None, local_ns=None):
-        '''
+        r'''
         Run TikZ code in LaTeX and plot result.
 
             In [9]: %tikz \draw (0,0) rectangle (1,1);
@@ -335,7 +335,7 @@ class TikzMagics(Magics):
 
         tex = []
         tex.append('''
-\\documentclass[convert={convertexe={%(imagemagick_path)s},%(add_params)s,outext=.png},border=0pt]{standalone}
+\\documentclass[convert={convertexe={%(imagemagick_path)s},%(add_params)s,outext=.png},border=1pt]{standalone}
 ''' % locals())
 
         tex.append('\\usepackage[%(tikz_options)s]{%(tikz_package)s}\n' % locals())
