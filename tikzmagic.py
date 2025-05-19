@@ -335,7 +335,7 @@ class TikzMagics(Magics):
 
         tex = []
         tex.append('''
-\\documentclass[convert={convertexe={%(imagemagick_path)s},%(add_params)s,outext=.png},border=1pt]{standalone}
+\\documentclass[convert={imagemagick,%(add_params)s,outext=.png},border=1pt]{standalone}
 ''' % locals())
 
         tex.append('\\usepackage[%(tikz_options)s]{%(tikz_package)s}\n' % locals())
@@ -405,9 +405,9 @@ class TikzMagics(Magics):
         for tag, disp_d in display_data:
             if plot_format == 'svg':
                 # isolate data in an iframe, to prevent clashing glyph declarations in SVG
-                self._publish_display_data(source=tag, data=disp_d, metadata={'isolated' : 'true'})
+                self._publish_display_data(data=disp_d, metadata={'isolated' : 'true'})
             else:
-                self._publish_display_data(source=tag, data=disp_d, metadata=None)
+                self._publish_display_data(data=disp_d, metadata=None)
 
 
 @magics_class
